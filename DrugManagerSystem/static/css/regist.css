@@ -1,0 +1,22 @@
+.regist_form{
+    width: 300px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+.regist_title{
+    text-align: center;
+}
+
+.regist_phone_tips{
+    font-size: 12px;
+    color: red;
+}
+
+.regist_password_tips{
+    font-size: 12px;
+    color: red;
+}
+
+
+

@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}首页{% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/home.css') }}">
+    <script type="text/javascript">
+        function btn_hover_on() {
+            Document.getElementsByClassName('home_menu_add').style.backgroundColor = '#F9F9F9';
+            Document.getElementsByClassName('home_addText').style.color = '#337AB7';
+        }
+
+        function btn_hover_out() {
+            Document.getElementsByClassName('home_menu_add').style.backgroundColor = '#337AB7';
+            Document.getElementsByClassName('home_addText').style.color = '#ffffff';
+        }
+
+        function btn_add() {
+            location.href = "{{ url_for('addDrug') }}";
+        }
+
+        function btn_addType() {
+            location.href = "{{ url_for('addDrugType') }}";
+        }
+    </script>
+{% endblock %}
+<!--内容-->
+{% block content %}
+    <div class="home_content">
+        <!--左边-->
+        <div class="home_nav">
+            <div class="home_nav_title">
+                <p>药品类别</p>
+            </div>
+            <div class="home_nav_type">
+                {% for drugType in drugTypes %}
+                    {% if drugTypeId %}
+                        {% if drugTypeId == drugType.id %}
+                            <label class="home_nav_addType" onclick="location.href = '{{ url_for('drugType', drugTypeId=drugType.id) }}'">{{ drugType.name }}</label>
+                        {% else %}
+                            <label class="home_nav_addType_un" onclick="location.href = '{{ url_for('drugType', drugTypeId=drugType.id) }}'">{{ drugType.name }}</label>
+                        {% endif %}
+                    {% else %}
+                        <label class="home_nav_addType_un" onclick="location.href = '{{ url_for('drugType', drugTypeId=drugType.id) }}'">
+                            {{ drugType.name }}
+                        </label>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <!--ShowDiv('MyDiv','fade')-->
+            <div class="home_nav_add" onclick="btn_addType()">
+                <div>
+                    <img class="nav_add_addImg" src="{{ url_for('static',filename='image/add_type.png') }}">
+                    <p class="nav_add_lable">添加类别</p>
+                </div>
+            </div>
+        </div>
+        <!--右边-->
+        <div class="home_right">
+            <div class="home_content_head">
+                <p class="home_content_title">药品列表</p>
+            </div>
+            <div class="home_content_menu">
+                <div class="home_menu_add"
+                     onmouseout="btn_hover_out()"
+                     onmouseover="btn_hover_on()"
+                     onclick="btn_add()">
+                    <img class="home_addImg" src="{{ url_for('static',filename='image/add.png') }}">
+                    <label class="home_addText">增加药品</label>
+                </div>
+            </div>
+            <div class="home_content_table">
+                <table class="table table-striped table-bordered">
+                    <tr class="table_title">
+                        <td class="table_title_txt">序号</td>
+                        <td class="table_title_txt">药品编号</td>
+                        <td class="table_title_txt">药品名称</td>
+                        <td class="table_title_txt">库存(个)</td>
+                        <td class="table_title_txt">操作</td>
+                    </tr>
+                    {% if drugs %}
+                        {% for drug in drugs %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ drug.num }}</td>
+                                <td>{{ drug.name }}</td>
+                                <td>{{ drug.count }}</td>
+                                <td><a href="{{ url_for('drugDetail',drugNum=drug.num) }}"
+                                       class="home_content_show">查看</a></td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr class="noDataTr">
+                            <td colspan="5" class="noDataTd">当前列表数据为空...</td>
+                        </tr>
+                    {% endif %}
+                </table>
+                {#                <div class="home_content_bottom">#}
+                {#                    <div class="home_content_nav">#}
+                {#                        <nav aria-label="Page navigation">#}
+                {#                            <ul class="pagination">#}
+                {#                                <li>#}
+                {#                                    <a href="#" aria-label="Previous">#}
+                {#                                        <span aria-hidden="true">&laquo;</span>#}
+                {#                                    </a>#}
+                {#                                </li>#}
+                {#                                <li><a href="#">1</a></li>#}
+                {#                                <li><a href="#">2</a></li>#}
+                {#                                <li><a href="#">3</a></li>#}
+                {#                                <li><a href="#">4</a></li>#}
+                {#                                <li><a href="#">5</a></li>#}
+                {#                                <li>#}
+                {#                                    <a href="#" aria-label="Next">#}
+                {#                                        <span aria-hidden="true">&raquo;</span>#}
+                {#                                    </a>#}
+                {#                                </li>#}
+                {#                            </ul>#}
+                {#                        </nav>#}
+                {#                    </div>#}
+                {#                </div>#}
+            </div>
+        </div>
+    </div>
+{% endblock %}

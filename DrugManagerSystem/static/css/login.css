@@ -1,0 +1,18 @@
+.login_content{
+    padding: 10px;
+    height: 280px;
+}
+
+.login_form{
+    width: 300px;
+    margin: 0 auto;
+}
+
+.login_checkbox{
+    text-align: right;
+}
+
+.login_title{
+    text-align: center;
+}
+

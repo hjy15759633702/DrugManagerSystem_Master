@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}药品详情{% endblock %}
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/drugDetail.css') }}">
+{% endblock %}
+<!--内容-->
+{% block content %}
+    <div class="drugDetail_content">
+        <p class="drugDetail_content_title">药品详情</p>
+        <div class="drugDetail_content_one">
+            <div class="drugDetail_content_item">
+                <!--药品编号-->
+                <div class="drugDetail_num_content">
+                    <div class="drugDetail_num">
+                        <label class="drugDetail_num_lable">药品编号：</label>
+                        {% if drug %}
+                            <label class="drugDetail_num_value">{{ drug.num }}</label>
+                        {% endif %}
+                    </div>
+                </div>
+                <!--药品名称-->
+                <div class="drugDetail_name_content">
+                    <div class="drugDetail_name">
+                        <label class="drugDetail_name_lable">药品名称：</label>
+                        {% if drug %}
+                            <label class="drugDetail_name_value">{{ drug.name }}</label>
+                        {% endif %}
+                    </div>
+                </div>
+                <!--药品类别-->
+                <div class="drugDetail_type_content">
+                    <div class="drugDetail_type">
+                        <label class="drugDetail_type_lable">药品类别：</label>
+                        {% if drug %}
+                            <label class="drugDetail_type_value">{{ drug.drugType.name }}</label>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="drugDetail_content_secound">
+            <div class="drugDetail_content_item">
+                <!--进货价格-->
+                <div class="drugDetail_stockPrice_content">
+                    <div class="drugDetail_stockPrice">
+                        <label class="drugDetail_stockPrice_lable">进货价格：</label>
+                        {% if drug %}
+                            <label class="drugDetail_stockPrice_value">{{ drug.stockPrice }}元</label>
+                        {% endif %}
+                    </div>
+                </div>
+                <!--进货日期-->
+                <div class="drugDetail_stockDate_content">
+                    <div class="drugDetail_stockDate">
+                        <label class="drugDetail_stockDate_lable">进货日期：</label>
+                        {% if drug %}
+                            <label class="drugDetail_stockDate_value">{{ drug.stockDate }}</label>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="drugDetail_content_secound">
+            <div class="drugDetail_content_item">
+                <!--出售价格-->
+                <div class="drugDetail_stockPrice_content">
+                    <div class="drugDetail_stockPrice">
+                        <label class="drugDetail_stockPrice_lable">出售价格：</label>
+                        {% if drug %}
+                            <label class="drugDetail_salePrice_value">{{ drug.salePice }}元</label>
+                        {% endif %}
+                    </div>
+                </div>
+                <!--库存-->
+                <div class="drugDetail_name_content">
+                    <div class="drugDetail_name">
+                        <label class="drugDetail_name_lable">库存：</label>
+                        {% if stockCount %}
+                            <label class="drugDetail_count_value">{{ stockCount }}个</label>
+                        {% else %}
+                            <label class="drugDetail_count_value">0个</label>
+                        {% endif %}
+                    </div>
+                </div>
+                <!--出售-->
+                <div class="drugDetail_type_content">
+                    <div class="drugDetail_type">
+                        <label class="drugDetail_type_lable">出售：</label>
+                        {% if saleCount %}
+                            <label class="drugDetail_count_value">{{ saleCount }}个</label>
+                        {% else %}
+                            <label class="drugDetail_count_value">0个</label>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="drugDetail_content_four">
+            <!--进货价格-->
+            <div class="drugDetail_desc_content">
+                <div class="drugDetail_desc">
+                    <label class="drugDetail_stockPrice_lable">详情：</label>
+                    {% if drug %}
+                        <div class="drugDetail_desc_value">
+                            {{ drug.desc }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="drugDetail_content_five">
+            <div class="drugDetail_btn_item">
+                <a class="drugDetail_btn_update" href="{{ url_for('regist') }}">修改</a>
+                <a class="drugDetail_btn_delete" href="{{ url_for('regist') }}">删除</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
