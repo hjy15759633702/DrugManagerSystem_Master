@@ -60,7 +60,6 @@
                 <tr class="table_title">
                     <td class="table_title_txt">序号</td>
                     <td class="table_title_txt">药品类别</td>
-                    <td class="table_title_txt">库存(个)</td>
                     <td class="table_title_txt">操作</td>
                 </tr>
                 {% if drugTypes %}
@@ -68,7 +67,6 @@
                         <tr>
                             <td>{{ loop.index }}</td>
                             <td>{{ drugType.name }}</td>
-                            <td>{{ drugType.count }}</td>
                             <td><a id="delete"
                                     {# onclick="ShowDiv('MyDiv','fade')"#}
                                    href="{{ url_for('deleteDrugType',drugTypeId=drugType.id) }}"

@@ -4,6 +4,7 @@
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('static',filename='css/drugDetail.css') }}">
 {% endblock %}
+
 <!--内容-->
 {% block content %}
     <div class="drugDetail_content">
@@ -39,36 +40,36 @@
                 </div>
             </div>
         </div>
-        <div class="drugDetail_content_secound">
-            <div class="drugDetail_content_item">
-                <!--进货价格-->
-                <div class="drugDetail_stockPrice_content">
-                    <div class="drugDetail_stockPrice">
-                        <label class="drugDetail_stockPrice_lable">进货价格：</label>
-                        {% if drug %}
-                            <label class="drugDetail_stockPrice_value">{{ drug.stockPrice }}元</label>
-                        {% endif %}
-                    </div>
-                </div>
-                <!--进货日期-->
-                <div class="drugDetail_stockDate_content">
-                    <div class="drugDetail_stockDate">
-                        <label class="drugDetail_stockDate_lable">进货日期：</label>
-                        {% if drug %}
-                            <label class="drugDetail_stockDate_value">{{ drug.stockDate }}</label>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
+{#        <div class="drugDetail_content_secound">#}
+{#            <div class="drugDetail_content_item">#}
+{#                <!--进货价格-->#}
+{#                <div class="drugDetail_stockPrice_content">#}
+{#                    <div class="drugDetail_stockPrice">#}
+{#                        <label class="drugDetail_stockPrice_lable">药品价格：</label>#}
+{#                        {% if drug %}#}
+{#                            <label class="drugDetail_stockPrice_value">{{ drug.price }}元</label>#}
+{#                        {% endif %}#}
+{#                    </div>#}
+{#                </div>#}
+{#                <!--进货日期-->#}
+{#                <div class="drugDetail_stockDate_content">#}
+{#                    <div class="drugDetail_stockDate">#}
+{#                        <label class="drugDetail_stockDate_lable">进货日期：</label>#}
+{#                        {% if drug %}#}
+{#                            <label class="drugDetail_stockDate_value">{{ drug.stockDate }}</label>#}
+{#                        {% endif %}#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#        </div>#}
         <div class="drugDetail_content_secound">
             <div class="drugDetail_content_item">
                 <!--出售价格-->
                 <div class="drugDetail_stockPrice_content">
                     <div class="drugDetail_stockPrice">
-                        <label class="drugDetail_stockPrice_lable">出售价格：</label>
+                        <label class="drugDetail_stockPrice_lable">药品价格：</label>
                         {% if drug %}
-                            <label class="drugDetail_salePrice_value">{{ drug.salePice }}元</label>
+                            <label class="drugDetail_salePrice_value">{{ drug.price }}元</label>
                         {% endif %}
                     </div>
                 </div>
@@ -76,10 +77,8 @@
                 <div class="drugDetail_name_content">
                     <div class="drugDetail_name">
                         <label class="drugDetail_name_lable">库存：</label>
-                        {% if stockCount %}
-                            <label class="drugDetail_count_value">{{ stockCount }}个</label>
-                        {% else %}
-                            <label class="drugDetail_count_value">0个</label>
+                        {% if drug %}
+                            <label class="drugDetail_count_value">{{ drug.count }}个</label>
                         {% endif %}
                     </div>
                 </div>
@@ -87,17 +86,14 @@
                 <div class="drugDetail_type_content">
                     <div class="drugDetail_type">
                         <label class="drugDetail_type_lable">出售：</label>
-                        {% if saleCount %}
-                            <label class="drugDetail_count_value">{{ saleCount }}个</label>
-                        {% else %}
-                            <label class="drugDetail_count_value">0个</label>
+                        {% if drug %}
+                            <label class="drugDetail_count_value">{{ drug.saleCount }}个</label>
                         {% endif %}
                     </div>
                 </div>
             </div>
         </div>
         <div class="drugDetail_content_four">
-            <!--进货价格-->
             <div class="drugDetail_desc_content">
                 <div class="drugDetail_desc">
                     <label class="drugDetail_stockPrice_lable">详情：</label>

@@ -1,0 +1,43 @@
+一、药品详情表 drug
+药品id  主键
+药品编号 num
+药品名称 name
+药品价格 price
+药品数量 count
+药品描述 desc
+药品类别编号  外键 drugTypeId
+进货编号 外键 stockId
+选购编号 外键 saleId
+
+二、药品类别表 drugType
+类别编号 id
+类别名称 name
+
+三、进货表 stock
+进货编号 id
+进货时间 stockDate
+进货价格 stockPrice
+进货数量 stockCount
+进货总金额 stockMoney
+进货人编号 外键 userId
+
+四、选购表 sale
+选购编号 id
+选购时间 time
+选购数量 saleCount
+选购总价 saleMoney
+选购人编号 外键 userId
+结账编号 外键accountId
+
+五、结账表 account
+结账编号 id
+交易流水号 accountNo
+结账时间 time
+结账总价 accountMoney
+结账人编号 外键 userId
+
+六、用户表 user
+用户编号 id
+用户电话 telephone
+用户账号 username
+用户密码 password

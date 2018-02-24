@@ -7,7 +7,7 @@
 
 from flask import Flask, render_template, request, url_for, redirect, session
 import config
-from models import User, Drug, DrugType, Sale, Account
+from models import User, Drug, DrugType, Sale, Account, Stock
 from exts import db
 from sqlalchemy import func
 from sqlalchemy import extract
@@ -18,7 +18,6 @@ app = Flask(__name__)
 app.config.from_object(config)
 db.init_app(app)
 
-
 # 首页
 @app.route('/')
 def home():
@@ -27,22 +26,12 @@ def home():
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
-            drugs = []
-            # 获取数据列表
-            drugTypes = DrugType.query.all()
-
-            # 获取所有药品 前面一百条数据
-            drugsfromDb = db.session.query(Drug.num, Drug.name, func.count('*').label('count')).filter(Drug.isSale == False) \
-                .group_by(Drug.num).order_by(Drug.id)
-
-            # 从数据库查到列表
-            for drug in drugsfromDb:
-                drugs.append(drug)
-
-            return render_template('home.html', drugTypes=drugTypes, drugs=drugs)
+            drug_types = DrugType.query.all()
+            drugs = Drug.query.all()
+            return render_template('home.html', drugTypes=drug_types, drugs=drugs)
     return redirect(url_for('login'))
 
-# 根据某个列别查询
+# 根据某个类别查询
 @app.route('/drugType/<int:drugTypeId>/')
 def drugType(drugTypeId):
     # 判断用户是否登录
@@ -50,19 +39,10 @@ def drugType(drugTypeId):
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
-            drugs = []
-            # 获取数据列表
             drugTypes = DrugType.query.all()
-
-            # 获取所有药品
-            drugsfromDb = db.session.query(Drug.num, Drug.name, func.count('*').label('count'))\
-                .filter(db.and_(Drug.drugTypeId == drugTypeId,Drug.isSale == False)).group_by(Drug.num).order_by(Drug.id)
-
-            # 从数据库查到列表
-            for drug in drugsfromDb:
-                drugs.append(drug)
-
+            drugs = Drug.query.filter(Drug.drugTypeId == drugTypeId).all()
             return render_template('home.html', drugTypes=drugTypes, drugs=drugs, drugTypeId=drugTypeId)
+
     return redirect(url_for('login'))
 
 # 登录
@@ -121,42 +101,43 @@ def addDrug():
             if request.method == 'GET':
                 return render_template('addDrug.html')
             else:
-                # 当前时间
-                nowDate = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                 num = request.form.get('num')
                 name = request.form.get('name')
                 type = request.form.get('type')
                 count = request.form.get('count')
                 price = request.form.get('price')
                 desc = request.form.get('desc')
+                # 首先查找药品是否存在
+                drug = Drug.query.filter(Drug.num == num).first()
 
-                try:
-                    count = int(count)
-                except Exception:
-                    raise ValueError('count value is error!')
-
-                # 查找数据库类别表
-                drugType = DrugType.query.filter(DrugType.name == type).first()
-                if drugType:
-                    drugTypeId = drugType.id
-                    for index in range(0, count):
-                        drug = Drug(num=num, name=name, desc=desc, stockDate=nowDate, stockPrice=price, drugTypeId=drugTypeId)
-                        drug.drugType = drugType
-                        db.session.add(drug)
-                        db.session.flush()  # 主要是这里，写入数据库，但是不提交
-                else:
-                    drugType = DrugType(name=type)
-                    db.session.add(drugType)
+                # 如果存在
+                if drug:
+                    # 库存量增加
+                    Drug.query.filter(Drug.id == drug.id).update({Drug.count: int(drug.count)+int(count)})
+                    stock = Stock(stockPrice=price, stockCount=count, stockMoney=int(count)*float(price), drugId=drug.id, userId=user_id)
+                    db.session.add(stock)
                     db.session.commit()
-                    drugTypeId = drugType.id
-                    for index in range(0, count):
-                        drug = Drug(num=num, name=name, desc=desc, stockDate=nowDate, stockPrice=price, drugTypeId=drugTypeId)
-                        drug.drugType = drugType
-                        db.session.add(drug)
-                        db.session.flush()  # 主要是这里，写入数据库，但是不提交
+                else:
+                    # 判断类别
+                    drugType = DrugType.query.filter(DrugType.name == type).first()
+                    # 存在
+                    if drugType:
+                        drug = Drug(num=num, name=name, count=count, price=price, desc=desc, drugTypeId=drugType.id)
+                    else:
+                        drugType = DrugType(name=type)
+                        db.session.add(drugType)
+                        db.session.commit()
+                        drugType = DrugType.query.filter(DrugType.name == type).first()
+                        drug = Drug(num=num, name=name, count=count, price=price, desc=desc, drugTypeId=drugType.id)
 
-                db.session.commit()
+                    db.session.add(drug)
+                    db.session.commit()
+                    drug = Drug.query.filter(Drug.num == num).first()
+                    stock = Stock(stockPrice=price, stockCount=count, stockMoney=int(count)*float(price), drugId=drug.id, userId=user_id)
+                    db.session.add(stock)
+                    db.session.commit()
                 return redirect(url_for('home'))
+
     return redirect(url_for('login'))
 
 
@@ -168,17 +149,9 @@ def addDrugType():
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
+            drugTypeTips = None
             if request.method == 'GET':
-                drugTypeTips = None
-                drugTypes = []
-                # 获取数据列表
-                drugTypesfromDb = DrugType.query.all()
-                # 从数据库查到列表
-                for drugType in drugTypesfromDb:
-                    count = Drug.query.filter(Drug.drugTypeId == drugType.id).count()
-                    drugType.set_count(count)
-                    drugTypes.append(drugType)
-                return render_template('addDrugType.html', drugTypes=drugTypes, drugTypeTips=drugTypeTips)
+                drugTypes = DrugType.query.all()
             else:
                 drugTypeName = request.form.get('drugTypeName')
                 drugType = DrugType.query.filter(DrugType.name == drugTypeName).first()
@@ -189,17 +162,9 @@ def addDrugType():
                     drugType = DrugType(name=drugTypeName)
                     db.session.add(drugType)
                     db.session.commit()
+                drugTypes = DrugType.query.all()
 
-                drugTypes = []
-                # 获取数据列表
-                drugTypesfromDb = DrugType.query.all()
-                # 从数据库查到列表
-                for drugType in drugTypesfromDb:
-                    count = Drug.query.filter(Drug.drugTypeId == drugType.id).count()
-                    drugType.set_count(count)
-                    drugTypes.append(drugType)
-
-                return render_template('addDrugType.html', drugTypes=drugTypes, drugTypeTips=drugTypeTips)
+            return render_template('addDrugType.html', drugTypes=drugTypes, drugTypeTips=drugTypeTips)
 
     return redirect(url_for('login'))
 
@@ -214,12 +179,8 @@ def drugDetail(drugNum):
         if user:
             # 查找药品数据库
             drug = Drug.query.filter(Drug.num == drugNum).first()
-            # 出售
-            saleCount = Drug.query.filter(Drug.isSale == True, Drug.num == drugNum).count()
-            # 库存
-            stockCount = Drug.query.filter(Drug.isSale == False, Drug.num == drugNum).count()
 
-            return render_template('drugDetail.html', drug=drug, saleCount=saleCount, stockCount=stockCount)
+            return render_template('drugDetail.html', drug=drug)
 
     return redirect(url_for('login'))
 
