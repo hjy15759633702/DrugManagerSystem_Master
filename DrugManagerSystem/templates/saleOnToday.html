@@ -46,28 +46,45 @@
                 <table class="table table-striped table-bordered">
                     <tr class="table_title">
                         <td class="table_title_txt">序号</td>
-                        <td class="table_title_txt">药品名称</td>
-                        <td class="table_title_txt">单价</td>
-                        <td class="table_title_txt">数量(个)</td>
-                        <td class="table_title_txt">金额</td>
-                        <td class="table_title_txt">销售时间</td>
+                        <td class="table_title_txt">详情</td>
+                        <td class="table_title_txt">总金额</td>
+                        <td class="table_title_txt">结账时间</td>
                         <td class="table_title_txt">操作员</td>
                     </tr>
                     {% if accounts %}
                         {% for account in accounts %}
                             <tr>
                                 <td>{{ loop.index }}</td>
-                                <td>{{ account['name'] }}</td>
-                                <td>{{ account['stockPrice'] }}</td>
-                                <td>{{ account['count'] }}</td>
-                                <td>{{ account['money'] }}</td>
+                                <td>
+                                    <table class="table table-striped table-bordered">
+                                        <tr class="table_title">
+                                            <td class="table_title_txt">序号</td>
+                                            <td class="table_title_txt">药名</td>
+                                            <td class="table_title_txt">价格</td>
+                                            <td class="table_title_txt">数量</td>
+                                            <td class="table_title_txt">金额</td>
+                                        </tr>
+                                        {% if account['details'] %}
+                                            {% for sale in account['details'] %}
+                                                <tr>
+                                                    <td>{{ loop.index }}</td>
+                                                    <td>{{ sale['name'] }}</td>
+                                                    <td>{{ sale['price'] }}</td>
+                                                    <td>{{ sale['count'] }}</td>
+                                                    <td>{{ sale['money'] }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </table>
+                                </td>
+                                <td>{{ account['accountMoney'] }}</td>
                                 <td>{{ account['time'] }}</td>
                                 <td>{{ account['username'] }}</td>
                             </tr>
                         {% endfor %}
                     {% else %}
                         <tr class="noDataTr">
-                            <td colspan="7" class="noDataTd">当前列表数据为空...</td>
+                            <td colspan="5" class="noDataTd">当前列表数据为空...</td>
                         </tr>
                     {% endif %}
                 </table>

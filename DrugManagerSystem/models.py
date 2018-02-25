@@ -108,7 +108,7 @@ class Account(db.Model):
     accountNo = db.Column(db.String(50), nullable=False, default='00000000')
     # 结账时间
     time = db.Column(db.DateTime(), nullable=False, default=datetime.now)
-    accountMoney = db.Column(db.REAL(), nullable=False)
+    accountMoney = db.Column(db.REAL(), nullable=False, default=0)
     # 关联用户表id
     userId = db.Column(db.Integer(), db.ForeignKey('user.id'))
     user = db.relationship('User', backref='account')

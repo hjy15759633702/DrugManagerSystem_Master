@@ -70,3 +70,9 @@
     width: 100%;
     padding: 10px;
 }
+
+.table_title_txt{
+    font-size: 14px;
+    font-weight: bold;
+    color: black;
+}

@@ -38,28 +38,30 @@
                         <td class="table_title_txt">序号</td>
                         <td class="table_title_txt">药品编号</td>
                         <td class="table_title_txt">药品名称</td>
-                        <td class="table_title_txt">可选购(个)</td>
+                        <td class="table_title_txt">库存(个)</td>
+                        <td class="table_title_txt">卖出(个)</td>
                         <td class="table_title_txt">操作</td>
                     </tr>
                     {% if drugs %}
                         {% for drug in drugs %}
                             <tr>
                                 <td>{{ loop.index }}</td>
-                                <td>{{ drug['num'] }}</td>
-                                <td>{{ drug['name'] }}</td>
-                                <td>{{ drug['count'] }}</td>
-                                {% if drug['count'] <= 0 %}
+                                <td>{{ drug.num }}</td>
+                                <td>{{ drug.name }}</td>
+                                <td>{{ drug.count }}</td>
+                                <td>{{ drug.saleCount }}</td>
+                                {% if drug.count <= 0 %}
                                     <td><a href="javascript:return false;" onclick="return false;"
                                            class="unSale_btn">购买</a></td>
                                 {% else %}
-                                    <td><a href="{{ url_for('saleDrug',drugNum=drug['num']) }}"
+                                    <td><a href="{{ url_for('saleDrug',drugId=drug.id) }}"
                                            class="home_content_show">购买</a></td>
                                 {% endif %}
                             </tr>
                         {% endfor %}
                     {% else %}
                         <tr class="noDataTr">
-                            <td colspan="5" class="noDataTd">当前列表数据为空...</td>
+                            <td colspan="6" class="noDataTd">当前列表数据为空...</td>
                         </tr>
                     {% endif %}
                 </table>

@@ -47,26 +47,24 @@
                     <tr class="table_title">
                         <td class="table_title_txt">序号</td>
                         <td class="table_title_txt">药品编号</td>
+                        <td class="table_title_txt">药品名称</td>
                         <td class="table_title_txt">单价</td>
-                        <td class="table_title_txt">数量(个)</td>
-                        <td class="table_title_txt">金额</td>
-                        <td class="table_title_txt">销售时间</td>
-                        <td class="table_title_txt">操作员</td>
+                        <td class="table_title_txt">销量(个)</td>
+                        <td class="table_title_txt">库存(个)</td>
                     </tr>
-                    {% if accounts %}
-                        {% for account in accounts %}
+                    {% if drugs %}
+                        {% for drug in drugs %}
                             <tr>
                                 {% if loop.index > 3 %}
                                     <td>{{ loop.index }}</td>
                                 {% else %}
                                     <td style="color: red; font-size: 16px; font-weight: bold">{{ loop.index }}</td>
                                 {% endif %}
-                                <td>{{ account['name'] }}</td>
-                                <td>{{ account['stockPrice'] }}</td>
-                                <td>{{ account['count'] }}</td>
-                                <td>{{ account['money'] }}</td>
-                                <td>{{ account['time'] }}</td>
-                                <td>{{ account['username'] }}</td>
+                                <td>{{ drug.num }}</td>
+                                <td>{{ drug.name }}</td>
+                                <td>{{ drug.price }}</td>
+                                <td>{{ drug.saleCount }}</td>
+                                <td>{{ drug.count }}</td>
                             </tr>
                         {% endfor %}
                     {% else %}

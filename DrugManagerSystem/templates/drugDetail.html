@@ -107,8 +107,8 @@
         </div>
         <div class="drugDetail_content_five">
             <div class="drugDetail_btn_item">
-                <a class="drugDetail_btn_update" href="{{ url_for('regist') }}">修改</a>
-                <a class="drugDetail_btn_delete" href="{{ url_for('regist') }}">删除</a>
+                <a class="drugDetail_btn_update" href="{{ url_for('addStock', drugNum=drug.num) }}">进货</a>
+                <a class="drugDetail_btn_delete" href="{{ url_for('saleDrug', drugId=drug.id) }}">购买</a>
             </div>
         </div>
     </div>

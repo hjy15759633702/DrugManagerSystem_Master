@@ -95,7 +95,7 @@
                                        class="form-control"
                                        min="0.0" step="1.0"
                                        readonly='true'
-                                       value="{{ drug.stockPrice }}"
+                                       value="{{ drug.price }}"
                                        name="price">
                             </div>
                         </div>
@@ -114,6 +114,10 @@
                     </div>
                 </div>
             </div>
+            <!--药品id-->
+            <input type="hidden" value="{{ drug.id }}" class="form-control" name="id">
+            <!--库存量-->
+            <input type="hidden" value="{{ drug.count }}" class="form-control" name="stockCount">
             <!--第四行-->
             <div class="addDrug_content_four" style="margin-bottom: 10px">
                 <div class="addDrug_save_item">

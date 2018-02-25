@@ -42,18 +42,18 @@
                         <td class="table_title_txt">选购人</td>
                         <td class="table_title_txt">操作</td>
                     </tr>
-                    {% if showSales %}
-                        {% for showSale in showSales %}
+                    {% if sales %}
+                        {% for sale in sales %}
                             <tr>
                                 <td>{{ loop.index }}</td>
-                                <td>{{ showSale['name'] }}</td>
-                                <td>{{ showSale['stockPrice'] }}</td>
-                                <td>{{ showSale['saleCount'] }}</td>
-                                <td>{{ showSale['money'] }}</td>
-                                <td>{{ showSale['username'] }}</td>
+                                <td>{{ sale.drug.name }}</td>
+                                <td>{{ sale.drug.price }}</td>
+                                <td>{{ sale.saleCount }}</td>
+                                <td>{{ sale.saleMoney }}</td>
+                                <td>{{ sale.user.username }}</td>
                                 <td>
                                     <a class="showSaleDrug_content_show"
-                                       href="{{ url_for('deleteSale',num=showSale['num']) }}">删除</a>
+                                       href="{{ url_for('deleteSale',id=sale.id) }}">删除</a>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -62,14 +62,14 @@
                             <td colspan="7" class="noDataTd">当前列表数据为空...</td>
                         </tr>
                     {% endif %}
-                    {% if showSales %}
+                    {% if sales %}
                         <tr class="table_title">
                             <td colspan="8" style="width: 100%">
                                 <div class="showSaleDrug_table_menuItem">
                                     <a class="showSaleDrug_table_menu" href="{{ url_for('saleDrugHome') }}">继续</a>
                                     <a class="showSaleDrug_table_menu" href="{{ url_for('clearSale') }}">清除</a>
                                     <a class="showSaleDrug_table_menu" href="{{ url_for('account') }}">结账</a>
-                                    <label class="showSaleDrug_table_all">总共:{{ allCount }}元</label>
+                                    <label class="showSaleDrug_table_all">总共:{{ saleMoney }}元</label>
                                 </div>
                             </td>
                         </tr>

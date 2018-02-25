@@ -39,6 +39,7 @@
                     <td class="table_title_txt">药品编号</td>
                     <td class="table_title_txt">药品名称</td>
                     <td class="table_title_txt">库存(个)</td>
+                    <td class="table_title_txt">卖出(个)</td>
                     <td class="table_title_txt">操作</td>
                 </tr>
                 {% if drugs %}
@@ -48,13 +49,14 @@
                             <td>{{ drug.num }}</td>
                             <td>{{ drug.name }}</td>
                             <td>{{ drug.count }}</td>
+                            <td>{{ drug.saleCount }}</td>
                             <td><a href="{{ url_for('addStock',drugNum=drug.num) }}" class="home_content_show">进货</a>
                             </td>
                         </tr>
                     {% endfor %}
                 {% else %}
                     <tr class="noDataTr">
-                        <td colspan="5" class="noDataTd">当前列表数据为空...</td>
+                        <td colspan="6" class="noDataTd">当前列表数据为空...</td>
                     </tr>
                 {% endif %}
             </table>

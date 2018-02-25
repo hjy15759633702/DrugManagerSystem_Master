@@ -25,6 +25,16 @@
         {#               $(this).addClass('active').siblings().removeClass('active');#}
         {#           });#}
         {#        });#}
+        $(function () {
+            $(".faq-tabbable").find("li").each(function () {
+                    var a = $(this).find("a:first")[0];
+                    if ($(a).attr("href") === location.pathname) {
+                        $(this).addClass("active");
+                    } else {
+                        $(this).removeClass("active");
+                    }
+                });
+        })
 
         function checkData() {
             var input = document.getElementById('input').value;
@@ -65,7 +75,7 @@
                 <a class="navbar-brand" href="{{ url_for('home') }}">药品管理系统</a>
             </div>
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav">
+                <ul class="nav navbar-nav faq-tabbable">
                     <li class="active"><a href="{{ url_for('home') }}">首页</a></li>
                     <li><a href="{{ url_for('addStockHome') }}">进货</a></li>
                     <li><a href="{{ url_for('saleDrugHome') }}">购买</a></li>

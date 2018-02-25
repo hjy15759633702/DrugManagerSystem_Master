@@ -188,7 +188,6 @@ def drugDetail(drugNum):
 # 删除药品类别
 @app.route('/deleteDrugType/<drugTypeId>/', methods=['GET', 'POST'])
 def deleteDrugType(drugTypeId):
-    print ('drugTypeId:' + drugTypeId)
     # 判断用户是否登录
     user_id = session.get('user_id')
     if user_id:
@@ -197,13 +196,12 @@ def deleteDrugType(drugTypeId):
             # 查找药品数据库
             drugType = DrugType.query.filter(DrugType.id == drugTypeId).first()
             if drugType:
-                # 删除药品
-                drugs = Drug.query.filter(Drug.drugTypeId == drugType.id).all()
-                for drug in drugs:
-                    db.session.delete(drug)
-                    db.session.flush()
+                # # 删除药品
+                # drugs = Drug.query.filter(Drug.drugTypeId == drugType.id).all()
+                # for drug in drugs:
+                #     db.session.delete(drug)
+                #     db.session.flush()
                 db.session.delete(drugType)
-                db.session.flush()
                 db.session.commit()
             return redirect(url_for('addDrugType'))
 
@@ -220,17 +218,12 @@ def searchDrug():
         if user:
             # 判断是否是POST
             if request.method == 'POST':
-                drugs = []
                 keywords = request.form.get('keywords')
 
-                drugsfromDb = Drug.query.filter(db.or_(Drug.num.like("%" + keywords + "%"),
+                drugs = Drug.query.filter(db.or_(Drug.num.like("%" + keywords + "%"),
                                                        Drug.name.like("%" + keywords + "%"),
                                                        Drug.desc.like("%" + keywords + "%"))) \
                     .group_by(Drug.num).order_by(Drug.id)
-
-                # 从数据库查到列表
-                for drug in drugsfromDb:
-                    drugs.append(drug)
 
                 return render_template('searchDrug.html', drugs=drugs)
 
@@ -250,27 +243,21 @@ def addStock(drugNum):
                 drug = Drug.query.filter(Drug.num == drugNum).first()
                 return render_template('addStock.html', drug=drug)
             else:
+                id = request.form.get('id')
                 num = request.form.get('num')
                 name = request.form.get('name')
                 type = request.form.get('type')
                 count = request.form.get('count')
+                # 原来库存量
+                stockCount = request.form.get('stockCount')
                 price = request.form.get('price')
                 desc = request.form.get('desc')
 
-                try:
-                    count = int(count)
-                except Exception:
-                    raise ValueError('count value is error!')
-
-                # 查找数据库类别表
-                drugType = DrugType.query.filter(DrugType.name == type).first()
-                if drugType:
-                    drugTypeId = drugType.id
-                    for index in range(0, count):
-                        drug = Drug(num=num, name=name, desc=desc, stockPrice=price, drugTypeId=drugTypeId)
-                        drug.drugType = drugType
-                        db.session.add(drug)
-                        db.session.flush()  # 主要是这里，写入数据库，但是不提交
+                # 库存量增加
+                Drug.query.filter(Drug.id == id).update({Drug.count: int(stockCount) + int(count)})
+                stock = Stock(stockPrice=price, stockCount=count, stockMoney=int(count) * float(price),
+                              drugId=id, userId=user_id)
+                db.session.add(stock)
                 db.session.commit()
 
                 return redirect(url_for('addStockHome'))
@@ -285,16 +272,9 @@ def addStockHome():
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
-            drugs = []
-            # 获取所有药品 前面一百条数据
-            drugsfromDb = db.session.query(Drug.num, Drug.name, func.count('*').label('count')).filter(Drug.isSale == False) \
-                .group_by(Drug.num).order_by(Drug.id).all()
-
-            # 从数据库查到列表
-            for drug in drugsfromDb:
-                drugs.append(drug)
-
+            drugs = Drug.query.all()
             return render_template('addStockHome.html', drugs=drugs)
+
     return redirect(url_for('login'))
 
 
@@ -306,32 +286,24 @@ def addStocHistory():
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
-            drugs = []
-            drugsfromDb = db.session.query(Drug.num, Drug.name, Drug.stockDate,
-                                           func.count('*').label('count')).group_by(Drug.stockDate).order_by(
-                db.desc(Drug.stockDate))
-            # 从数据库查到列表
-            for drug in drugsfromDb:
-                drugs.append(drug)
-            return render_template('addStockHis.html', drugs=drugs)
+            stocks = Stock.query.all()
+            return render_template('addStockHis.html', stocks=stocks)
 
     return redirect(url_for('login'))
 
 
 # 退货操作
-@app.route('/backStock/<drugNum>/<stockDate>', methods=['GET'])
-def backStock(drugNum, stockDate):
+@app.route('/backStock/<stockId>/', methods=['GET'])
+def backStock(stockId):
     # 判断用户是否登录
     user_id = session.get('user_id')
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
-            drugsfromDb = Drug.query.filter(db.and_(Drug.num == drugNum, Drug.stockDate == stockDate)).all()
-            # 从数据库查到列表
-            for drug in drugsfromDb:
-                db.session.delete(drug)
-                db.session.commit()
-
+            stock = Stock.query.filter(Stock.id == stockId).first()
+            Drug.query.filter(Drug.id == stock.drug.id).update({Drug.count: int(stock.drug.count)-int(stock.stockCount)})
+            db.session.delete(stock)
+            db.session.commit()
             return redirect(url_for('addStocHistory'))
 
     return redirect(url_for('login'))
@@ -345,31 +317,14 @@ def saleDrugHome():
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
-            drugs = []
-            # 获取所有药品 药品编号进行分组查询  查找每种药品库存多少
-            drugsfromDb = db.session.query(Drug.num, Drug.name, func.count('*').label('count')).filter(Drug.isSale == False).group_by(Drug.num).all()
-            # 对购买表 药品编号进行分组查询  查找每种药品选购多少
-            salesfromDb = db.session.query(Sale.drugNum, func.count('*').label('count')) \
-                .filter(Sale.userId == user_id).group_by(Sale.drugNum).all()
-
-            for d in drugsfromDb:
-                drug = {}
-                count = d.count
-                drug['num'] = d.num
-                drug['name'] = d.name
-                for s in salesfromDb:
-                    if d.num == s.drugNum:
-                        if d.count - s.count >= 0:
-                            count = d.count - s.count
-                drug['count'] = count
-                drugs.append(drug)
+            drugs = Drug.query.all()
             return render_template('saleDrugHome.html', drugs=drugs)
     return redirect(url_for('login'))
 
 
 # 购买
-@app.route('/saleDrug/<drugNum>/', methods=['GET', 'POST'])
-def saleDrug(drugNum):
+@app.route('/saleDrug/<drugId>/', methods=['GET', 'POST'])
+def saleDrug(drugId):
     # 判断用户是否登录
     user_id = session.get('user_id')
     if user_id:
@@ -378,33 +333,22 @@ def saleDrug(drugNum):
             # 判断是否是POST
             if request.method == 'GET':
                 count = 0
-                drug = {}
-                # 查找药品编号  卖出价格 数量
-                drugsfromDb = db.session.query(Drug.num, Drug.name, Drug.stockPrice,
-                                               func.count('*').label('count')).filter(db.and_(Drug.num == drugNum, Drug.isSale == False)).first()
-                salesfromDb = db.session.query(func.count('*').label('count')).filter(
-                    db.and_(Sale.drugNum == drugNum, Sale.userId == user_id)).first()
-
-                drug['name'] = drugsfromDb.name
-                drug['num'] = drugsfromDb.num
-                drug['stockPrice'] = drugsfromDb.stockPrice
-
-                if drugsfromDb.count - salesfromDb.count >= 0:
-                    count = drugsfromDb.count - salesfromDb.count
-
-                drug['count'] = count
-
-                return render_template('saleDrug.html', drug=drug)
+                drug = Drug.query.filter(Drug.id == drugId).first()
+                # 查找选购表 药品的选购数量
+                s = db.session.query(func.sum(Sale.saleCount).label('count')).\
+                    filter(db.and_(Sale.userId == user_id, Sale.drugId == drug.id, Sale.accountId == None)).group_by(Sale.drugId).first()
+                if s:
+                    count = s.count
+                return render_template('saleDrug.html', drug=drug, count=int(drug.count)-count)
             else:
-                num = request.form.get('num')
+                nowTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                id = request.form.get('id')
+                price = request.form.get('price')
                 saleCount = request.form.get('saleCount')
 
-                for index in range(int(saleCount)):
-                    nowTime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                    sale = Sale(time=nowTime, userId=user.id, drugNum=num)
-                    sale.user = user
-                    db.session.add(sale)
-                    db.session.commit()
+                sale = Sale(time=nowTime, userId=user.id, saleCount=saleCount, saleMoney=int(saleCount)*float(price), drugId=id)
+                db.session.add(sale)
+                db.session.commit()
 
                 return redirect(url_for('showSaleDrug'))
 
@@ -419,41 +363,26 @@ def showSaleDrug():
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
-            showSales = []
-            allCount = 0
-            sales = db.session.query(Sale.id, Sale.drugNum, Sale.time, Sale.userId,
-                                     func.count('*').label('count')).filter(Sale.userId == user_id).group_by(
-                Sale.drugNum).all()
+            saleMoney = 0
+            # 还未结账 accountId=None
+            sales = Sale.query.filter(db.and_(Sale.userId == user_id, Sale.accountId == None)).all()
             for sale in sales:
-                showSale = {}
-                drug = Drug.query.filter(Drug.num == sale.drugNum).first()
-                user = User.query.filter(User.id == sale.userId).first()
-                showSale['id'] = sale.id
-                showSale['num'] = sale.drugNum
-                showSale['name'] = drug.name
-                showSale['stockPrice'] = drug.stockPrice
-                showSale['saleCount'] = sale.count
-                showSale['money'] = sale.count * drug.stockPrice
-                allCount = allCount + sale.count * drug.stockPrice
-                # showSale['time'] = sale.time
-                showSale['username'] = user.username
-                showSales.append(showSale)
-            return render_template('showSaleDrug.html', showSales=showSales, allCount=allCount)
+                saleMoney = saleMoney + sale.saleMoney
+            return render_template('showSaleDrug.html', sales=sales, saleMoney=saleMoney)
 
     return redirect(url_for('login'))
 
 
 # 删除选购
-@app.route('/deleteSale/<num>', methods=['GET'])
-def deleteSale(num):
+@app.route('/deleteSale/<id>', methods=['GET'])
+def deleteSale(id):
     # 判断用户是否登录
     user_id = session.get('user_id')
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
-            sales = Sale.query.filter(db.and_(Sale.drugNum == num, Sale.userId == user_id)).all()
-            for sale in sales:
-                db.session.delete(sale)
+            sale = Sale.query.filter(Sale.id == id).first()
+            db.session.delete(sale)
             db.session.commit()
             return redirect(url_for('showSaleDrug'))
 
@@ -487,29 +416,23 @@ def account():
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
+            saleMoney = 0
             nowDate = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-            # 查出当前管理员所有的选购药品进行结账
-            sales = db.session.query(Sale.drugNum, Sale.userId, func.count('*').label('count')).filter(
-                Sale.userId == user_id).group_by(Sale.drugNum).all()
+            # 插入结账表
+            account = Account(userId=user_id, time=nowDate)
+            db.session.add(account)
+            db.session.commit()
+
+            sales = Sale.query.filter(Sale.userId == user_id, Sale.accountId == None).all()
             for sale in sales:
-                # 结账之前，查询一下库存量是否充足(之间选购已经判断过了)
-                drugs = Drug.query.filter(db.and_(Drug.num == sale.drugNum, Drug.isSale == False)).all()
-                for i in range(len(drugs)):
-                    if i > sale.count - 1:
-                        break
-                    drug = drugs[i]
-                    Drug.query.filter(Drug.id == drug.id).update({Drug.isSale: True, Drug.saleDate: nowDate})
-                    account = Account(drugId=drug.id, userId=user_id, drugNum=drug.num, time=nowDate)
-                    db.session.add(account)
-                    db.session.commit()
+                saleMoney = saleMoney + sale.saleMoney
+                Sale.query.filter(Sale.id == sale.id).update({Sale.accountId: account.id})
+                Drug.query.filter(Drug.id == sale.drug.id).update({Drug.count: int(sale.drug.count)-int(sale.saleCount),
+                    Drug.saleCount: sale.saleCount})
+                db.session.flush()
 
-                # 删除选购表数据
-                salesFromDb = Sale.query.filter(db.and_(Sale.drugNum == sale.drugNum, Sale.userId == user_id)).all()
-                for i in range(len(salesFromDb)):
-                    db.session.delete(salesFromDb[i])
-                    db.session.flush()
-
-                db.session.commit()
+            Account.query.filter(Account.id == account.id).update({Account.accountMoney: saleMoney})
+            db.session.commit()
 
             return redirect(url_for('saleManageHome'))
 
@@ -524,21 +447,27 @@ def saleManageHome():
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
-            acs = db.session.query(Account.drugId, Account.userId, Account.time,
-                                   func.count('*').label('count')).group_by(Account.time, Account.drugNum).all()
             accounts = []
-            for a in acs:
+            ats = Account.query.all()
+            for a in ats:
                 account = {}
-                drug = Drug.query.filter(Drug.id == a.drugId).first()
-                user = User.query.filter(User.id == a.userId).first()
-                account['name'] = drug.name
-                account['stockPrice'] = drug.stockPrice
-                account['count'] = a.count
+                account['accountId'] = a.id
+                account['username'] = a.user.username
+                account['accountMoney'] = a.accountMoney
                 account['time'] = a.time
-                account['money'] = a.count * drug.stockPrice
-                account['username'] = user.username
-                accounts.append(account)
+                # 遍历选购表
+                ss = Sale.query.filter(Sale.accountId == a.id).all()
+                sales = []
+                for sale in ss:
+                    s = {}
+                    s['name'] = sale.drug.name
+                    s['price'] = sale.drug.price
+                    s['count'] = sale.saleCount
+                    s['money'] = sale.saleMoney
+                    sales.append(s)
 
+                account['details'] = sales
+                accounts.append(account)
             return render_template('saleManageHome.html', accounts=accounts)
     return redirect(url_for('login'))
 
@@ -552,21 +481,27 @@ def saleOnToday():
         user = User.query.filter(User.id == user_id).first()
         if user:
             cur = datetime.datetime.now()
-            acs = db.session.query(Account.drugId, Account.userId, Account.time, func.count('*').label('count')) \
-                .filter(db.and_(extract('year', Account.time) == cur.year, extract('month', Account.time) == cur.month,
-                                extract('day', Account.time) == cur.day)) \
-                .group_by(Account.time, Account.drugNum).all()
+            ats = Account.query.filter(db.and_(extract('year', Account.time) == cur.year, extract('month', Account.time) == cur.month,
+                                extract('day', Account.time) == cur.day)).all()
             accounts = []
-            for a in acs:
+            for a in ats:
                 account = {}
-                drug = Drug.query.filter(Drug.id == a.drugId).first()
-                user = User.query.filter(User.id == a.userId).first()
-                account['name'] = drug.name
-                account['stockPrice'] = drug.stockPrice
-                account['count'] = a.count
+                account['accountId'] = a.id
+                account['username'] = a.user.username
+                account['accountMoney'] = a.accountMoney
                 account['time'] = a.time
-                account['money'] = a.count * drug.stockPrice
-                account['username'] = user.username
+                # 遍历选购表
+                ss = Sale.query.filter(Sale.accountId == a.id).all()
+                sales = []
+                for sale in ss:
+                    s = {}
+                    s['name'] = sale.drug.name
+                    s['price'] = sale.drug.price
+                    s['count'] = sale.saleCount
+                    s['money'] = sale.saleMoney
+                    sales.append(s)
+
+                account['details'] = sales
                 accounts.append(account)
             return render_template('saleOnToday.html', accounts=accounts)
     return redirect(url_for('login'))
@@ -583,42 +518,53 @@ def saleSearchByDay():
             if request.method == 'GET':
                 # 查询今日的明细
                 cur = datetime.datetime.now()
-                acs = db.session.query(Account.drugId, Account.userId, Account.time, func.count('*').label('count')) \
-                    .filter(
-                    db.and_(extract('year', Account.time) == cur.year, extract('month', Account.time) == cur.month,
-                            extract('day', Account.time) == cur.day)) \
-                    .group_by(Account.time, Account.drugNum).all()
+                ats = Account.query.filter(db.and_(extract('year', Account.time) == cur.year, extract('month', Account.time) == cur.month,
+                            extract('day', Account.time) == cur.day)).all()
                 accounts = []
-                for a in acs:
+                for a in ats:
                     account = {}
-                    drug = Drug.query.filter(Drug.id == a.drugId).first()
-                    user = User.query.filter(User.id == a.userId).first()
-                    account['name'] = drug.name
-                    account['stockPrice'] = drug.stockPrice
-                    account['count'] = a.count
+                    account['accountId'] = a.id
+                    account['username'] = a.user.username
+                    account['accountMoney'] = a.accountMoney
                     account['time'] = a.time
-                    account['money'] = a.count * drug.stockPrice
-                    account['username'] = user.username
+                    # 遍历选购表
+                    ss = Sale.query.filter(Sale.accountId == a.id).all()
+                    sales = []
+                    for sale in ss:
+                        s = {}
+                        s['name'] = sale.drug.name
+                        s['price'] = sale.drug.price
+                        s['count'] = sale.saleCount
+                        s['money'] = sale.saleMoney
+                        sales.append(s)
+
+                    account['details'] = sales
                     accounts.append(account)
                 return render_template('saleSearchByDay.html', accounts=accounts, startTime=cur.strftime("%Y-%m-%d"),
                                        endTime=cur.strftime("%Y-%m-%d"))
             else:
                 startTime = request.form.get('startTime')
                 endTime = request.form.get('endTime')
-
-                acs = db.session.query(Account.drugId, Account.userId, Account.time, func.count('*').label('count')) \
-                    .filter(Account.time.between(startTime, endTime)).group_by(Account.time, Account.drugNum).all()
+                ats = Account.query.filter(Account.time.between(startTime, endTime)).all()
                 accounts = []
-                for a in acs:
+                for a in ats:
                     account = {}
-                    drug = Drug.query.filter(Drug.id == a.drugId).first()
-                    user = User.query.filter(User.id == a.userId).first()
-                    account['name'] = drug.name
-                    account['stockPrice'] = drug.stockPrice
-                    account['count'] = a.count
+                    account['accountId'] = a.id
+                    account['username'] = a.user.username
+                    account['accountMoney'] = a.accountMoney
                     account['time'] = a.time
-                    account['money'] = a.count * drug.stockPrice
-                    account['username'] = user.username
+                    # 遍历选购表
+                    ss = Sale.query.filter(Sale.accountId == a.id).all()
+                    sales = []
+                    for sale in ss:
+                        s = {}
+                        s['name'] = sale.drug.name
+                        s['price'] = sale.drug.price
+                        s['count'] = sale.saleCount
+                        s['money'] = sale.saleMoney
+                        sales.append(s)
+
+                    account['details'] = sales
                     accounts.append(account)
                 return render_template('saleSearchByDay.html', accounts=accounts, startTime=startTime, endTime=endTime)
     return redirect(url_for('login'))
@@ -632,22 +578,8 @@ def saleOrder():
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
-            acs = db.session.query(Account.drugId, Account.userId, Account.time,
-                                   func.count('*').label('count')).group_by(Account.time, Account.drugNum).all()
-            acs = sorted(acs, cmp=lambda x, y: cmp(y.count, x.count))
-            accounts = []
-            for a in acs:
-                account = {}
-                drug = Drug.query.filter(Drug.id == a.drugId).first()
-                user = User.query.filter(User.id == a.userId).first()
-                account['name'] = drug.name
-                account['stockPrice'] = drug.stockPrice
-                account['count'] = a.count
-                account['time'] = a.time
-                account['money'] = a.count * drug.stockPrice
-                account['username'] = user.username
-                accounts.append(account)
-            return render_template('saleOrder.html', accounts=accounts)
+            drugs = Drug.query.order_by(db.desc(Drug.saleCount)).all()
+            return render_template('saleOrder.html', drugs=drugs)
 
     return redirect(url_for('login'))
 
