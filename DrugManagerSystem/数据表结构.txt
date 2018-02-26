@@ -4,10 +4,9 @@
 药品名称 name
 药品价格 price
 药品数量 count
+药品出售数量 saleCount
 药品描述 desc
 药品类别编号  外键 drugTypeId
-进货编号 外键 stockId
-选购编号 外键 saleId
 
 二、药品类别表 drugType
 类别编号 id
@@ -19,6 +18,7 @@
 进货价格 stockPrice
 进货数量 stockCount
 进货总金额 stockMoney
+药品编号 外键 drugId
 进货人编号 外键 userId
 
 四、选购表 sale
@@ -27,7 +27,8 @@
 选购数量 saleCount
 选购总价 saleMoney
 选购人编号 外键 userId
-结账编号 外键accountId
+结账编号 外键 accountId
+药品编号 外键 drugId
 
 五、结账表 account
 结账编号 id

@@ -28,8 +28,6 @@ class User(db.Model):
 # 药品价格 price
 # 药品描述 desc
 # 药品类别编号  外键 drugTypeId
-# 进货编号 外键 stockId
-# 选购编号 外键 saleId
 class Drug(db.Model):
     __tablename__ = 'drug'
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
@@ -57,6 +55,7 @@ class DrugType(db.Model):
 # 进货价格 stockPrice
 # 进货数量 stockCount
 # 进货总金额 stockMoney
+# 药品编号 外键 drugId
 # 进货人编号 外键 userId
 class Stock(db.Model):
     __tablename__ = 'stock'
@@ -78,7 +77,8 @@ class Stock(db.Model):
 # 选购数量 saleCount
 # 选购总价 saleMoney
 # 选购人编号 外键 userId
-# 结账编号 外键accountId
+# 结账编号 外键 accountId
+# 药品编号 外键 drugId
 class Sale(db.Model):
     __tablename__ = 'sale'
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
