@@ -9,13 +9,14 @@ from flask import Flask, render_template, request, url_for, redirect, session
 import config
 from models import User, Drug, DrugType, Sale, Account, Stock
 from exts import db
-from sqlalchemy import func
-from sqlalchemy import extract
+from sqlalchemy import func, extract
 import time
 import datetime
+from api_view import api
 
 app = Flask(__name__)
 app.config.from_object(config)
+app.register_blueprint(api, url_prefix='/api')
 db.init_app(app)
 
 # 首页
@@ -263,7 +264,6 @@ def addStock(drugNum):
                 return redirect(url_for('addStockHome'))
     return redirect(url_for('login'))
 
-
 # 进货首页
 @app.route('/addStockHome/', methods=['GET'])
 def addStockHome():
@@ -397,7 +397,7 @@ def clearSale():
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
-            sales = Sale.query.filter(Sale.userId == user_id).all()
+            sales = Sale.query.filter(Sale.userId == user_id, Sale.accountId == None).all()
             for sale in sales:
                 db.session.delete(sale)
                 db.session.flush()
@@ -428,12 +428,11 @@ def account():
                 saleMoney = saleMoney + sale.saleMoney
                 Sale.query.filter(Sale.id == sale.id).update({Sale.accountId: account.id})
                 Drug.query.filter(Drug.id == sale.drug.id).update({Drug.count: int(sale.drug.count)-int(sale.saleCount),
-                    Drug.saleCount: sale.saleCount})
+                    Drug.saleCount: int(sale.drug.saleCount) + int(sale.saleCount)})
                 db.session.flush()
 
             Account.query.filter(Account.id == account.id).update({Account.accountMoney: saleMoney})
             db.session.commit()
-
             return redirect(url_for('saleManageHome'))
 
     return redirect(url_for('login'))
@@ -541,7 +540,7 @@ def saleSearchByDay():
                     account['details'] = sales
                     accounts.append(account)
                 return render_template('saleSearchByDay.html', accounts=accounts, startTime=cur.strftime("%Y-%m-%d"),
-                                       endTime=cur.strftime("%Y-%m-%d"))
+                                       endTime=(cur + datetime.timedelta(days=1)).strftime("%Y-%m-%d"))
             else:
                 startTime = request.form.get('startTime')
                 endTime = request.form.get('endTime')
@@ -578,7 +577,7 @@ def saleOrder():
     if user_id:
         user = User.query.filter(User.id == user_id).first()
         if user:
-            drugs = Drug.query.order_by(db.desc(Drug.saleCount)).all()
+            drugs = Drug.query.filter(Drug.saleCount != 0).order_by(db.desc(Drug.saleCount)).all()
             return render_template('saleOrder.html', drugs=drugs)
 
     return redirect(url_for('login'))
@@ -602,7 +601,7 @@ def my_context_processor():
             return {'user': user}
     return {}
 
-
 if __name__ == '__main__':
     app.debug = True
     app.run()
+    # app.run(debug=app.debug, host='0.0.0.0', port=5001)
